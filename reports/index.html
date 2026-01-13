@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galaxy Mail Analyzer - Project Summary</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a12 0%, #1a1a2e 50%, #0f3460 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 30px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        h1 { 
+            font-size: 3rem; 
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d4ff, #00ff88, #ffd93d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle { color: #888; font-size: 1.1rem; }
+        .date { color: #666; font-size: 0.9rem; margin-top: 5px; }
+        
+        .quick-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .quick-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 30px;
+            color: #fff;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .quick-link:hover {
+            background: rgba(0,212,255,0.2);
+            border-color: #00d4ff;
+            transform: translateY(-2px);
+        }
+        .quick-link.primary {
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            color: #000;
+            font-weight: 600;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card h2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+        .card h2 .icon { font-size: 1.5rem; }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .stat-item {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-label { color: #888; font-size: 0.85rem; margin-top: 5px; }
+        
+        .file-list { list-style: none; }
+        .file-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        .file-list li:hover { background: rgba(255,255,255,0.06); }
+        .file-name { font-family: 'SF Mono', Monaco, monospace; font-size: 0.9rem; }
+        .file-size { color: #888; font-size: 0.85rem; }
+        
+        .dashboard-links { list-style: none; }
+        .dashboard-links li {
+            margin-bottom: 10px;
+        }
+        .dashboard-links a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            color: #e0e0e0;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .dashboard-links a:hover {
+            background: rgba(0,212,255,0.1);
+            transform: translateX(5px);
+        }
+        .dashboard-links .dash-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .dash-tools { background: linear-gradient(135deg, #ff6b6b, #ff8e8e); }
+        .dash-coverage { background: linear-gradient(135deg, #00d4ff, #00ff88); }
+        .dash-status { background: linear-gradient(135deg, #ffd93d, #ffed4a); }
+        .dash-insights { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+        .dashboard-links .dash-title { font-weight: 600; }
+        .dashboard-links .dash-desc { font-size: 0.85rem; color: #888; }
+        
+        .instructions {
+            background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(0,255,136,0.05));
+            border: 1px solid rgba(0,212,255,0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+        .instructions h2 {
+            color: #00d4ff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .step {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+        }
+        .step-num {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #00d4ff, #00ff88);
+            color: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .step-content h3 { margin-bottom: 8px; color: #fff; }
+        .step-content p { color: #aaa; font-size: 0.95rem; }
+        code {
+            background: rgba(0,0,0,0.3);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.9rem;
+            color: #00ff88;
+        }
+        pre {
+            background: rgba(0,0,0,0.4);
+            padding: 15px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        pre code { padding: 0; background: none; }
+        
+        .findings {
+            background: rgba(255,107,107,0.1);
+            border: 1px solid rgba(255,107,107,0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+        .findings h3 { color: #ff6b6b; margin-bottom: 15px; }
+        .finding-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .finding-item:last-child { border-bottom: none; }
+        .finding-gap { color: #ff6b6b; font-weight: bold; }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: #666;
+        }
+        footer a { color: #00d4ff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Galaxy Mail Analyzer</h1>
+            <p class="subtitle">AI-powered analysis of galaxy-bugs mailing list</p>
+            <p class="date">Last updated: January 13, 2026 at 13:36</p>
+        </header>
+        
+        <div class="quick-links">
+            <a href="https://github.com/jennaj/mail_management" class="quick-link primary" target="_blank">
+                <span>📦</span> GitHub Repository
+            </a>
+            <a href="coverage-comparison.html" class="quick-link">
+                <span>📊</span> Coverage Analysis
+            </a>
+            <a href="mbox-dashboard.html" class="quick-link">
+                <span>🔧</span> Tool Dashboard
+            </a>
+            <a href="https://help.galaxyproject.org" class="quick-link" target="_blank">
+                <span>💬</span> Help Forum
+            </a>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h2><span class="icon">📈</span> Data Summary</h2>
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">24,351</div>
+                        <div class="stat-label">Bug Emails (2021-2025)</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">200</div>
+                        <div class="stat-label">Help Forum Topics</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">91</div>
+                        <div class="stat-label">GTN FAQs</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">712 MB</div>
+                        <div class="stat-label">Mbox Data</div>
+                    </div>
+                </div>
+                
+                <div class="findings">
+                    <h3>Key Documentation Gaps</h3>
+                    <div class="finding-item">
+                        <span>File Formats</span>
+                        <span class="finding-gap">16x under-documented</span>
+                    </div>
+                    <div class="finding-item">
+                        <span>Storage & Quota</span>
+                        <span class="finding-gap">39x under-documented</span>
+                    </div>
+                    <div class="finding-item">
+                        <span>History Management</span>
+                        <span class="finding-gap">13x under-documented</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="icon">📊</span> Dashboards</h2>
+                <ul class="dashboard-links">
+                    <li>
+                        <a href="coverage-comparison.html">
+                            <span class="dash-icon dash-coverage">📊</span>
+                            <div>
+                                <div class="dash-title">Coverage Comparison</div>
+                                <div class="dash-desc">Gap analysis: Bugs vs Help vs FAQs</div>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="mbox-dashboard.html">
+                            <span class="dash-icon dash-tools">🔧</span>
+                            <div>
+                                <div class="dash-title">Mbox Analysis</div>
+                                <div class="dash-desc">Top 25 tools, categories, trends</div>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="dashboard.html">
+                            <span class="dash-icon dash-status">⚡</span>
+                            <div>
+                                <div class="dash-title">System Status</div>
+                                <div class="dash-desc">Database and sync status</div>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="insights.html">
+                            <span class="dash-icon dash-insights">💡</span>
+                            <div>
+                                <div class="dash-title">Discourse Insights</div>
+                                <div class="dash-desc">Help forum data analysis</div>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h2><span class="icon">💾</span> Local Data Files</h2>
+                <p style="color:#888; margin-bottom:15px; font-size:0.9rem;">
+                    Stored in <code>~/bugs-mbox/20260113_download/</code>
+                </p>
+                <ul class="file-list">
+                    <li>
+                        <span class="file-name">galaxy-bugs-2025.mbox</span>
+                        <span class="file-size">146 MB</span>
+                    </li>
+                    <li>
+                        <span class="file-name">galaxy-bugs-2024.mbox</span>
+                        <span class="file-size">157 MB</span>
+                    </li>
+                    <li>
+                        <span class="file-name">galaxy-bugs-2023.mbox</span>
+                        <span class="file-size">186 MB</span>
+                    </li>
+                    <li>
+                        <span class="file-name">galaxy-bugs-2022.mbox</span>
+                        <span class="file-size">139 MB</span>
+                    </li>
+                    <li>
+                        <span class="file-name">galaxy-bugs-2021.mbox</span>
+                        <span class="file-size">84 MB</span>
+                    </li>
+                    <li>
+                        <span class="file-name">bugs_analysis_20260113.json</span>
+                        <span class="file-size">17 KB</span>
+                    </li>
+                    <li>
+                        <span class="file-name">comparison_analysis_20260113.json</span>
+                        <span class="file-size">6 KB</span>
+                    </li>
+                    <li>
+                        <span class="file-name">gtn-faqs/gtn_faqs_20260113.json</span>
+                        <span class="file-size">12 KB</span>
+                    </li>
+                    <li>
+                        <span class="file-name">discourse-help/discourse_topics_20260113.json</span>
+                        <span class="file-size">150 KB</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2><span class="icon">🎯</span> Use Cases</h2>
+                <div style="space-y: 15px;">
+                    <div style="background: rgba(0,255,136,0.1); padding: 15px; border-radius: 12px; margin-bottom: 12px; border-left: 4px solid #00ff88;">
+                        <strong style="color: #00ff88;">1. Draft Email Replies</strong>
+                        <p style="color: #aaa; font-size: 0.9rem; margin-top: 5px;">
+                            Search help topics and FAQs to find relevant links for bug report responses
+                        </p>
+                    </div>
+                    <div style="background: rgba(0,212,255,0.1); padding: 15px; border-radius: 12px; margin-bottom: 12px; border-left: 4px solid #00d4ff;">
+                        <strong style="color: #00d4ff;">2. Build New FAQs</strong>
+                        <p style="color: #aaa; font-size: 0.9rem; margin-top: 5px;">
+                            Use gap analysis to identify high-priority documentation needs
+                        </p>
+                    </div>
+                    <div style="background: rgba(255,217,61,0.1); padding: 15px; border-radius: 12px; border-left: 4px solid #ffd93d;">
+                        <strong style="color: #ffd93d;">3. Track Trends</strong>
+                        <p style="color: #aaa; font-size: 0.9rem; margin-top: 5px;">
+                            Monitor which tools and topics generate the most support requests
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h2><span>🚀</span> Getting Back Into the Project</h2>
+            
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h3>Navigate to Project</h3>
+                    <p>Open terminal and go to the project directory:</p>
+                    <pre><code>cd ~/git/mail_management</code></pre>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h3>Activate Environment</h3>
+                    <p>Activate the Python virtual environment:</p>
+                    <pre><code>source .venv/bin/activate</code></pre>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <h3>View Dashboards</h3>
+                    <p>Open the summary dashboard in your browser:</p>
+                    <pre><code>open reports/index.html</code></pre>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-content">
+                    <h3>Run CLI Commands</h3>
+                    <p>Use the CLI to sync data, search, or generate reports:</p>
+                    <pre><code>galaxy-mail --help
+galaxy-mail kb-search "fastq format"
+galaxy-mail stats</code></pre>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-num">5</div>
+                <div class="step-content">
+                    <h3>Update Data</h3>
+                    <p>To download new emails, authenticate and fetch by year:</p>
+                    <pre><code># Data is stored in ~/bugs-mbox/YYYYMMDD_download/
+# Re-run analysis scripts to update JSON files</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>
+                <a href="https://github.com/jennaj/mail_management" target="_blank">GitHub</a> · 
+                <a href="https://help.galaxyproject.org" target="_blank">Help Forum</a> · 
+                <a href="https://training.galaxyproject.org" target="_blank">GTN</a> · 
+                <a href="https://galaxyproject.org" target="_blank">Galaxy Project</a>
+            </p>
+            <p style="margin-top: 10px; font-size: 0.85rem;">
+                Generated with Claude Code · January 2026
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
