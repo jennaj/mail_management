@@ -19,7 +19,12 @@ class Settings(BaseSettings):
 
     # API Keys
     anthropic_api_key: str = Field(description="Anthropic API key for Claude")
-    voyage_api_key: str = Field(description="Voyage AI API key for embeddings")
+
+    # Optional - only needed if using Voyage AI instead of local embeddings
+    voyage_api_key: Optional[str] = Field(
+        default=None,
+        description="Optional Voyage AI API key (not needed - using local embeddings)",
+    )
 
     # Database
     database_url: str = Field(
@@ -62,13 +67,9 @@ class Settings(BaseSettings):
         default="claude-sonnet-4-5-20250929",
         description="Claude model for analysis",
     )
-    voyage_model: str = Field(
-        default="voyage-3.5",
-        description="Voyage AI model for embeddings",
-    )
-    embedding_dimensions: int = Field(
-        default=1024,
-        description="Embedding vector dimensions",
+    embedding_model: str = Field(
+        default="all-MiniLM-L6-v2",
+        description="Sentence-transformers model for embeddings (local, free)",
     )
     min_cluster_size: int = Field(
         default=50,

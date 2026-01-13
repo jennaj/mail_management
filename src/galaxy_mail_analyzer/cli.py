@@ -43,7 +43,7 @@ def sync(
     from .ingestion.mbox_parser import MboxParser
     from .storage.database import get_db
     from .storage.models import Email
-    from config.settings import get_settings
+    from .config.settings import get_settings
 
     settings = get_settings()
 

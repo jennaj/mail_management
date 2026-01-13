@@ -1,48 +1,54 @@
-"""Embedding generation using Voyage AI."""
+"""Embedding generation using sentence-transformers (local, free)."""
 
 import logging
-from typing import List
+from typing import Optional
 
-import voyageai
+from sentence_transformers import SentenceTransformer
 
-from config.settings import get_settings
+from ..config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
 
 class EmbeddingGenerator:
-    """Generate embeddings using Voyage AI."""
+    """Generate embeddings using sentence-transformers (local, no API key needed)."""
+
+    # Default model - good balance of quality and speed
+    DEFAULT_MODEL = "all-MiniLM-L6-v2"
 
     def __init__(
         self,
-        api_key: str | None = None,
-        model: str | None = None,
-        dimensions: int | None = None,
+        model_name: str | None = None,
     ):
         """Initialize the embedding generator.
 
         Args:
-            api_key: Voyage AI API key.
-            model: Model to use for embeddings.
-            dimensions: Output embedding dimensions.
+            model_name: Sentence-transformers model name. Defaults to all-MiniLM-L6-v2.
         """
-        settings = get_settings()
-        self._api_key = api_key or settings.voyage_api_key
-        self._model = model or settings.voyage_model
-        self._dimensions = dimensions or settings.embedding_dimensions
+        self._model_name = model_name or self.DEFAULT_MODEL
 
-        self._client = voyageai.Client(api_key=self._api_key)
+        logger.info(f"Loading embedding model: {self._model_name}")
+        self._model = SentenceTransformer(self._model_name)
+        self._dimensions = self._model.get_sentence_embedding_dimension()
+        logger.info(f"Model loaded. Embedding dimensions: {self._dimensions}")
+
+    @property
+    def dimensions(self) -> int:
+        """Get the embedding dimensions."""
+        return self._dimensions
 
     def embed_documents(
         self,
         texts: list[str],
-        batch_size: int = 128,
+        batch_size: int = 32,
+        show_progress: bool = False,
     ) -> list[list[float]]:
         """Generate embeddings for documents (knowledge base articles, emails).
 
         Args:
             texts: List of text documents to embed.
-            batch_size: Number of documents to embed per API call.
+            batch_size: Number of documents to embed per batch.
+            show_progress: Whether to show a progress bar.
 
         Returns:
             List of embedding vectors.
@@ -50,22 +56,16 @@ class EmbeddingGenerator:
         if not texts:
             return []
 
-        all_embeddings = []
+        logger.debug(f"Embedding {len(texts)} documents")
 
-        # Process in batches
-        for i in range(0, len(texts), batch_size):
-            batch = texts[i:i + batch_size]
-            logger.debug(f"Embedding batch {i // batch_size + 1}")
+        embeddings = self._model.encode(
+            texts,
+            batch_size=batch_size,
+            show_progress_bar=show_progress,
+            convert_to_numpy=True,
+        )
 
-            result = self._client.embed(
-                batch,
-                model=self._model,
-                input_type="document",
-                output_dimension=self._dimensions,
-            )
-            all_embeddings.extend(result.embeddings)
-
-        return all_embeddings
+        return [emb.tolist() for emb in embeddings]
 
     def embed_query(self, query: str) -> list[float]:
         """Generate embedding for a query (for searching).
@@ -76,35 +76,21 @@ class EmbeddingGenerator:
         Returns:
             Embedding vector.
         """
-        result = self._client.embed(
-            [query],
-            model=self._model,
-            input_type="query",
-            output_dimension=self._dimensions,
-        )
-        return result.embeddings[0]
+        embedding = self._model.encode(query, convert_to_numpy=True)
+        return embedding.tolist()
 
     def embed_batch(
         self,
         texts: list[str],
-        input_type: str = "document",
+        batch_size: int = 32,
     ) -> list[list[float]]:
         """Generate embeddings for a batch of texts.
 
         Args:
             texts: List of texts to embed.
-            input_type: Either "document" or "query".
+            batch_size: Batch size for encoding.
 
         Returns:
             List of embedding vectors.
         """
-        if not texts:
-            return []
-
-        result = self._client.embed(
-            texts,
-            model=self._model,
-            input_type=input_type,
-            output_dimension=self._dimensions,
-        )
-        return result.embeddings
+        return self.embed_documents(texts, batch_size=batch_size)

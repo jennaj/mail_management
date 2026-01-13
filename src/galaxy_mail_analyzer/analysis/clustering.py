@@ -10,7 +10,7 @@ from bertopic import BERTopic
 from hdbscan import HDBSCAN
 from umap import UMAP
 
-from config.settings import get_settings
+from ..config.settings import get_settings
 from ..storage.database import get_db
 from ..storage.models import Email, TopicCluster, ClusterAssignment
 from .embeddings import EmbeddingGenerator

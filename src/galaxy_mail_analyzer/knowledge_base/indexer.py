@@ -6,7 +6,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from config.settings import get_settings
+from ..config.settings import get_settings
 from ..storage.database import get_db
 from ..storage.models import KnowledgeBaseArticle
 from ..storage.vector_store import get_vector_store

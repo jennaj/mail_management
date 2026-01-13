@@ -6,7 +6,7 @@ from typing import Any
 import chromadb
 from chromadb.config import Settings as ChromaSettings
 
-from config.settings import get_settings
+from ..config.settings import get_settings
 
 
 class VectorStore:

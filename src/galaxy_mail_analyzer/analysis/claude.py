@@ -8,7 +8,7 @@ from typing import Any
 
 import anthropic
 
-from config.settings import get_settings
+from ..config.settings import get_settings
 from ..storage.database import get_db
 from ..storage.models import Email, EmailAnalysis, EmailStatus, IssueType
 

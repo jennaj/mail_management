@@ -9,7 +9,7 @@ from typing import AsyncIterator
 import httpx
 from bs4 import BeautifulSoup
 
-from config.settings import get_settings
+from ..config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -136,12 +136,14 @@ class DiscourseClient:
     async def fetch_topics_in_category(
         self,
         category_slug: str,
+        category_id: int,
         page: int = 0,
     ) -> dict:
         """Fetch topics in a category with pagination.
 
         Args:
             category_slug: Category slug.
+            category_id: Category ID.
             page: Page number (0-indexed).
 
         Returns:
@@ -149,9 +151,9 @@ class DiscourseClient:
         """
         await self._rate_limit()
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
             response = await client.get(
-                f"{self._host}/c/{category_slug}.json",
+                f"{self._host}/c/{category_slug}/{category_id}.json",
                 params={"page": page},
                 headers=self._get_headers(),
             )
@@ -245,6 +247,7 @@ class DiscourseClient:
                 break
 
             category_slug = category.get("slug", "")
+            category_id = category.get("id", 0)
             category_name = category.get("name", "Unknown")
             logger.info(f"Fetching category: {category_name}")
 
@@ -252,7 +255,7 @@ class DiscourseClient:
             while fetched < max_topics:
                 try:
                     topics_data = await self.fetch_topics_in_category(
-                        category_slug, page
+                        category_slug, category_id, page
                     )
                 except httpx.HTTPStatusError as e:
                     logger.warning(f"Error fetching category {category_slug}: {e}")
