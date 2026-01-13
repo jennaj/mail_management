@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galaxy Help - Data Insights</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+        }
+        h1 {
+            font-size: 2.8rem;
+            background: linear-gradient(90deg, #00d4ff, #ff6b6b, #ffd93d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+        .subtitle { color: #888; font-size: 1.2rem; }
+        .date { color: #666; margin-top: 10px; font-size: 0.9rem; }
+
+        .stats-hero {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .hero-stat {
+            background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(123,44,191,0.1));
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid rgba(0,212,255,0.3);
+        }
+        .hero-number {
+            font-size: 3.5rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-label { color: #888; margin-top: 10px; font-size: 1rem; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card h2 {
+            color: #00d4ff;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .emoji { font-size: 1.5rem; }
+
+        .insight-box {
+            background: rgba(0,212,255,0.1);
+            border-left: 4px solid #00d4ff;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+        }
+        .insight-box.warning {
+            background: rgba(255,193,7,0.1);
+            border-left-color: #ffc107;
+        }
+        .insight-box.success {
+            background: rgba(0,255,136,0.1);
+            border-left-color: #00ff88;
+        }
+        .insight-box.danger {
+            background: rgba(255,107,107,0.1);
+            border-left-color: #ff6b6b;
+        }
+
+        .bar-chart { margin: 10px 0; }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+        }
+        .bar-label { width: 140px; font-size: 0.9rem; color: #aaa; }
+        .bar-container {
+            flex: 1;
+            height: 24px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        .bar-value { width: 50px; text-align: right; font-size: 0.9rem; color: #00d4ff; }
+
+        .topic-list { margin-top: 15px; }
+        .topic-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin: 8px 0;
+            border-left: 3px solid #00d4ff;
+        }
+        .topic-item.solved { border-left-color: #00ff88; }
+        .topic-item.urgent { border-left-color: #ff6b6b; }
+        .topic-title {
+            flex: 1;
+            font-size: 0.95rem;
+            color: #ddd;
+        }
+        .topic-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin: 2px;
+        }
+        .tag-tool { background: rgba(0,212,255,0.2); color: #00d4ff; }
+        .tag-format { background: rgba(255,193,7,0.2); color: #ffc107; }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-top: 20px;
+        }
+
+        .key-finding {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        .key-finding .number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00d4ff;
+            min-width: 60px;
+        }
+        .key-finding .text h4 { color: #fff; margin-bottom: 5px; }
+        .key-finding .text p { color: #888; font-size: 0.9rem; }
+
+        .recommendation {
+            background: linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,212,255,0.1));
+            border: 1px solid rgba(0,255,136,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .recommendation h4 {
+            color: #00ff88;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .recommendation ul {
+            margin-left: 20px;
+            color: #bbb;
+        }
+        .recommendation li { margin: 8px 0; }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        @media (max-width: 1000px) {
+            .stats-hero { grid-template-columns: repeat(2, 1fr); }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Galaxy Help Forum Insights</h1>
+            <p class="subtitle">Analysis of 200 support topics from help.galaxyproject.org</p>
+            <p class="date">Generated: January 12, 2026</p>
+        </header>
+
+        <div class="stats-hero">
+            <div class="hero-stat">
+                <div class="hero-number">200</div>
+                <div class="hero-label">Total Topics</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-number" style="background: linear-gradient(90deg, #00ff88, #00d4ff); -webkit-background-clip: text;">41%</div>
+                <div class="hero-label">Resolution Rate</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-number">17.5K</div>
+                <div class="hero-label">Total Views</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-number">2.1</div>
+                <div class="hero-label">Avg Replies/Topic</div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 30px;">
+            <h2><span class="emoji">💡</span> Key Findings</h2>
+            <div class="grid-3">
+                <div class="key-finding">
+                    <div class="number">59%</div>
+                    <div class="text">
+                        <h4>Unsolved Topics</h4>
+                        <p>More than half of support topics remain unresolved, indicating need for better documentation or AI assistance</p>
+                    </div>
+                </div>
+                <div class="key-finding">
+                    <div class="number">56%</div>
+                    <div class="text">
+                        <h4>File/Format Issues</h4>
+                        <p>Over half of all issues involve file formats - this is the #1 pain point for users</p>
+                    </div>
+                </div>
+                <div class="key-finding">
+                    <div class="number">2.5x</div>
+                    <div class="text">
+                        <h4>Solved = More Views</h4>
+                        <p>Solved topics get 2x more views (122 vs 64), showing community value of solutions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h2><span class="emoji">🎯</span> Issue Categories</h2>
+                <div class="chart-container">
+                    <canvas id="issueChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h2><span class="emoji">📊</span> Solved vs Unsolved</h2>
+                <div class="chart-container">
+                    <canvas id="solvedChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h2><span class="emoji">🔧</span> Most Mentioned Tools & Concepts</h2>
+                <div class="bar-chart">
+                    <div class="bar-row">
+                        <span class="bar-label">STAR (aligner)</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 100%; background: linear-gradient(90deg, #ff6b6b, #ffd93d);"></div></div>
+                        <span class="bar-value">37</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">Dataset</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 100%; background: linear-gradient(90deg, #00d4ff, #00ff88);"></div></div>
+                        <span class="bar-value">37</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">History</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 81%; background: linear-gradient(90deg, #00d4ff, #00ff88);"></div></div>
+                        <span class="bar-value">30</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">Upload</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 76%; background: linear-gradient(90deg, #00d4ff, #00ff88);"></div></div>
+                        <span class="bar-value">28</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">FASTQ</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 54%; background: linear-gradient(90deg, #ffd93d, #ff6b6b);"></div></div>
+                        <span class="bar-value">20</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">BAM</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 51%; background: linear-gradient(90deg, #ffd93d, #ff6b6b);"></div></div>
+                        <span class="bar-value">19</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">Collection</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 51%; background: linear-gradient(90deg, #00d4ff, #7b2cbf);"></div></div>
+                        <span class="bar-value">19</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">Workflow</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 49%; background: linear-gradient(90deg, #00d4ff, #7b2cbf);"></div></div>
+                        <span class="bar-value">18</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">DESeq2</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 27%; background: linear-gradient(90deg, #ff6b6b, #ffd93d);"></div></div>
+                        <span class="bar-value">10</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">HISAT2</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 24%; background: linear-gradient(90deg, #ff6b6b, #ffd93d);"></div></div>
+                        <span class="bar-value">9</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h2><span class="emoji">📝</span> Common Keywords</h2>
+                <div class="bar-chart">
+                    <div class="bar-row">
+                        <span class="bar-label">galaxy</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 100%; background: #00d4ff;"></div></div>
+                        <span class="bar-value">24</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">file</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 75%; background: #00d4ff;"></div></div>
+                        <span class="bar-value">18</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">running</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 67%; background: #ffd93d;"></div></div>
+                        <span class="bar-value">16</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">tool</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 63%; background: #ffd93d;"></div></div>
+                        <span class="bar-value">15</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">reference</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 50%; background: #ff6b6b;"></div></div>
+                        <span class="bar-value">12</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">job</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 50%; background: #ff6b6b;"></div></div>
+                        <span class="bar-value">12</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">workflow</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 46%; background: #7b2cbf;"></div></div>
+                        <span class="bar-value">11</span>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">data</span>
+                        <div class="bar-container"><div class="bar-fill" style="width: 46%; background: #7b2cbf;"></div></div>
+                        <span class="bar-value">11</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 30px;">
+            <h2><span class="emoji">🔥</span> Most Viewed Topics</h2>
+            <div class="topic-list">
+                <div class="topic-item solved">
+                    <span class="topic-title">How do you use MultiQC on FastQC files taken from SRA files?</span>
+                    <div class="topic-meta">
+                        <span>👁 3,131 views</span>
+                        <span>✅ Solved</span>
+                    </div>
+                </div>
+                <div class="topic-item solved">
+                    <span class="topic-title">SnpEff errors while trying to run the tool</span>
+                    <div class="topic-meta">
+                        <span>👁 1,273 views</span>
+                        <span>✅ Solved</span>
+                    </div>
+                </div>
+                <div class="topic-item">
+                    <span class="topic-title">BioTradis empty counts output</span>
+                    <div class="topic-meta">
+                        <span>👁 663 views</span>
+                        <span>❓ Open</span>
+                    </div>
+                </div>
+                <div class="topic-item solved">
+                    <span class="topic-title">Cannot connect to Galaxy</span>
+                    <div class="topic-meta">
+                        <span>👁 548 views</span>
+                        <span>✅ Solved</span>
+                    </div>
+                </div>
+                <div class="topic-item">
+                    <span class="topic-title">This job was killed when Galaxy was restarted</span>
+                    <div class="topic-meta">
+                        <span>👁 457 views</span>
+                        <span>❓ Open</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 30px;">
+            <h2><span class="emoji">⚠️</span> Topics Needing Attention</h2>
+            <div class="insight-box danger">
+                <strong>5 topics have 0 replies and remain unsolved</strong> - These users may have given up waiting for help
+            </div>
+            <div class="topic-list">
+                <div class="topic-item urgent">
+                    <span class="topic-title">Bedgraph to bigwig problem</span>
+                    <div class="topic-meta"><span>0 replies</span><span>Waiting for help</span></div>
+                </div>
+                <div class="topic-item urgent">
+                    <span class="topic-title">Empty annotated transcript file</span>
+                    <div class="topic-meta"><span>0 replies</span><span>Waiting for help</span></div>
+                </div>
+                <div class="topic-item urgent">
+                    <span class="topic-title">Problem using Galaxy with Workflows and BioBlend</span>
+                    <div class="topic-meta"><span>0 replies</span><span>Waiting for help</span></div>
+                </div>
+                <div class="topic-item urgent">
+                    <span class="topic-title">How to perform spike-in normalization for CUT&RUN</span>
+                    <div class="topic-meta"><span>0 replies</span><span>Waiting for help</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2><span class="emoji">💡</span> Recommendations for AI-Assisted Support</h2>
+            <div class="grid-2">
+                <div class="recommendation">
+                    <h4>🤖 High-Impact Automation Opportunities</h4>
+                    <ul>
+                        <li><strong>File format issues (56%)</strong> - Create automated format validation and conversion suggestions</li>
+                        <li><strong>Tool errors (50%)</strong> - Build error message database with common solutions</li>
+                        <li><strong>STAR aligner</strong> - Most mentioned tool; create dedicated troubleshooting guide</li>
+                    </ul>
+                </div>
+                <div class="recommendation">
+                    <h4>📚 Documentation Improvements</h4>
+                    <ul>
+                        <li><strong>Reference genomes</strong> - 12 mentions; clearer docs on genome selection needed</li>
+                        <li><strong>Collections & Workflows</strong> - 37 combined mentions; complex features need tutorials</li>
+                        <li><strong>Data upload</strong> - 28 mentions; simplify upload process documentation</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="insight-box success" style="margin-top: 20px;">
+                <strong>Potential AI Impact:</strong> Based on this analysis, an AI assistant could potentially auto-respond to ~40% of incoming questions by matching them to solved topics and known solutions.
+            </div>
+        </div>
+
+        <footer>
+            <p>Galaxy Mail Analyzer | Data from help.galaxyproject.org</p>
+            <p style="margin-top: 10px; font-size: 0.85rem;">
+                This analysis helps identify patterns in user support requests to improve documentation and enable AI-assisted responses.
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Issue Categories Chart
+        new Chart(document.getElementById('issueChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['File/Format', 'Tool Errors', 'Data Issues', 'Workflow', 'Resources', 'Account'],
+                datasets: [{
+                    data: [112, 99, 74, 37, 15, 14],
+                    backgroundColor: ['#ff6b6b', '#ffd93d', '#00d4ff', '#7b2cbf', '#00ff88', '#ff9f43'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { color: '#888', padding: 15 }
+                    }
+                }
+            }
+        });
+
+        // Solved vs Unsolved Chart
+        new Chart(document.getElementById('solvedChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Topics', 'Avg Views', 'Avg Replies'],
+                datasets: [
+                    {
+                        label: 'Solved',
+                        data: [82, 122, 2.5],
+                        backgroundColor: '#00ff88'
+                    },
+                    {
+                        label: 'Unsolved',
+                        data: [118, 64, 1.9],
+                        backgroundColor: '#ff6b6b'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#888' }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    y: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
