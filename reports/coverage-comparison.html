@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galaxy Support Coverage Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1600px; margin: 0 auto; }
+        h1 { 
+            text-align: center; 
+            font-size: 2.5rem; 
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d4ff, #ff6b6b, #ffd93d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle { text-align: center; color: #888; margin-bottom: 30px; }
+        .purpose-box {
+            background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(123,44,191,0.1));
+            border: 1px solid rgba(0,212,255,0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        .purpose-box h2 { color: #00d4ff; margin-bottom: 15px; }
+        .purpose-box ul { margin-left: 20px; }
+        .purpose-box li { margin: 8px 0; color: #ccc; }
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .stat-number { 
+            font-size: 2rem; 
+            font-weight: bold;
+        }
+        .stat-bugs { background: linear-gradient(90deg, #ff6b6b, #ff8e8e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stat-discourse { background: linear-gradient(90deg, #00d4ff, #00ff88); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stat-gtn { background: linear-gradient(90deg, #ffd93d, #ffed4a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stat-label { color: #888; margin-top: 5px; font-size: 0.9rem; }
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card h2 { 
+            margin-bottom: 20px; 
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .icon { font-size: 1.5rem; }
+        .chart-container { position: relative; height: 350px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        th { color: #00d4ff; font-weight: 600; }
+        .bar-container { display: flex; gap: 2px; align-items: center; }
+        .bar-bugs { background: #ff6b6b; height: 16px; border-radius: 3px; }
+        .bar-discourse { background: #00d4ff; height: 16px; border-radius: 3px; }
+        .bar-gtn { background: #ffd93d; height: 16px; border-radius: 3px; }
+        .gap-warning { color: #ff6b6b; font-weight: bold; }
+        .gap-ok { color: #00ff88; }
+        .legend { display: flex; gap: 20px; margin-bottom: 15px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.85rem; }
+        .legend-color { width: 16px; height: 16px; border-radius: 3px; }
+        .full-width { grid-column: 1 / -1; }
+        .gap-card {
+            background: linear-gradient(135deg, rgba(255,107,107,0.1), rgba(255,107,107,0.05));
+            border: 1px solid rgba(255,107,107,0.3);
+        }
+        .gap-card h2 { color: #ff6b6b; }
+        .recommendation {
+            background: rgba(0,255,136,0.1);
+            border-left: 4px solid #00ff88;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 0 10px 10px 0;
+        }
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .tool-item {
+            background: rgba(255,255,255,0.03);
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .tool-name { font-weight: 500; }
+        .tool-count { font-weight: bold; }
+        .section-title {
+            font-size: 1.5rem;
+            color: #fff;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+        .action-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .action-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid;
+        }
+        .action-high { border-color: #ff6b6b; }
+        .action-medium { border-color: #ffd93d; }
+        .action-low { border-color: #00ff88; }
+        .action-card h3 { margin-bottom: 10px; }
+        .action-card p { color: #aaa; font-size: 0.9rem; }
+        .priority-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .priority-high { background: rgba(255,107,107,0.3); color: #ff6b6b; }
+        .priority-medium { background: rgba(255,217,61,0.3); color: #ffd93d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Galaxy Support Coverage Analysis</h1>
+        <p class="subtitle">Comparing Bugs, Help Forum, and GTN FAQs | Generated 2026-01-13 13:09</p>
+        
+        <div class="purpose-box">
+            <h2>🎯 Purpose of This Analysis</h2>
+            <ul>
+                <li><strong>Draft email replies</strong> to future bug reports with links to existing help resources and FAQs</li>
+                <li><strong>Build out FAQs</strong> from common issues that aren't yet documented</li>
+                <li><strong>Identify coverage gaps</strong> where users need help but no resources exist</li>
+            </ul>
+        </div>
+        
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-number stat-bugs">24,351</div>
+                <div class="stat-label">Bug Emails (2021-2025)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-discourse">200</div>
+                <div class="stat-label">Help Forum Topics</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-gtn">91</div>
+                <div class="stat-label">GTN FAQs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: #ff6b6b;">9</div>
+                <div class="stat-label">Tools Missing Help</div>
+            </div>
+        </div>
+
+        <div class="section-title">📊 Issue Category Coverage</div>
+        
+        <div class="grid">
+            <div class="card">
+                <h2><span class="icon">📈</span> Coverage by Category</h2>
+                <div class="chart-container">
+                    <canvas id="coverageChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h2><span class="icon">🔍</span> Coverage Gap Analysis</h2>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background:#ff6b6b"></div> Bugs</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#00d4ff"></div> Discourse</div>
+                    <div class="legend-item"><div class="legend-color" style="background:#ffd93d"></div> GTN FAQs</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Category</th><th>Bugs</th><th>Help</th><th>FAQs</th><th>Gap</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>File Formats</td>
+                            <td>1,738</td>
+                            <td>94</td>
+                            <td>16</td>
+                            <td class="gap-warning">⚠️ LOW</td>
+                        </tr>
+                        <tr>
+                            <td>History & Datasets</td>
+                            <td>1,040</td>
+                            <td>60</td>
+                            <td>21</td>
+                            <td class="gap-warning">⚠️ LOW</td>
+                        </tr>
+                        <tr>
+                            <td>Storage & Quota</td>
+                            <td>617</td>
+                            <td>11</td>
+                            <td>5</td>
+                            <td class="gap-warning">⚠️ LOW</td>
+                        </tr>
+                        <tr>
+                            <td>Data Input/Output</td>
+                            <td>385</td>
+                            <td>60</td>
+                            <td>17</td>
+                            <td class="gap-ok">✓</td>
+                        </tr>
+                        <tr>
+                            <td>Collections</td>
+                            <td>225</td>
+                            <td>39</td>
+                            <td>6</td>
+                            <td class="gap-ok">✓</td>
+                        </tr>
+                        <tr>
+                            <td>Reference Genomes</td>
+                            <td>219</td>
+                            <td>56</td>
+                            <td>12</td>
+                            <td class="gap-ok">✓</td>
+                        </tr>
+                        <tr>
+                            <td>Job Execution</td>
+                            <td>46</td>
+                            <td>53</td>
+                            <td>7</td>
+                            <td class="gap-ok">✓</td>
+                        </tr>
+                        <tr>
+                            <td>Workflows</td>
+                            <td>26</td>
+                            <td>18</td>
+                            <td>7</td>
+                            <td class="gap-ok">✓</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section-title">⚠️ Documentation Gaps</div>
+        
+        <div class="grid">
+            <div class="card gap-card">
+                <h2><span class="icon">🔧</span> Tools in Bugs but NOT in Help Forum</h2>
+                <p style="color:#aaa; margin-bottom:15px;">These tools generate bug reports but have no help forum coverage</p>
+                <div class="tool-grid">
+                    <div class="tool-item">
+                        <span class="tool-name">spades</span>
+                        <span class="tool-count" style="color:#ff6b6b">197</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">flye</span>
+                        <span class="tool-count" style="color:#ff6b6b">108</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">prokka</span>
+                        <span class="tool-count" style="color:#ff6b6b">78</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">edger</span>
+                        <span class="tool-count" style="color:#ff6b6b">65</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">minimap2</span>
+                        <span class="tool-count" style="color:#ff6b6b">65</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">circos</span>
+                        <span class="tool-count" style="color:#ff6b6b">63</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">roary</span>
+                        <span class="tool-count" style="color:#ff6b6b">57</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">cufflinks</span>
+                        <span class="tool-count" style="color:#ff6b6b">51</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">metaphlan</span>
+                        <span class="tool-count" style="color:#ff6b6b">48</span>
+                    </div>
+                </div>
+                <div class="recommendation">
+                    <strong>Recommendation:</strong> Create FAQ entries or help topics for these high-volume tools
+                </div>
+            </div>
+            
+            <div class="card gap-card">
+                <h2><span class="icon">📚</span> Top Tools with No GTN FAQs</h2>
+                <p style="color:#aaa; margin-bottom:15px;">Most mentioned tools in bugs that lack dedicated FAQs</p>
+                <div class="tool-grid">
+                    <div class="tool-item">
+                        <span class="tool-name">deseq2</span>
+                        <span class="tool-count" style="color:#ff6b6b">489</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">trinity</span>
+                        <span class="tool-count" style="color:#ff6b6b">451</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">bowtie2</span>
+                        <span class="tool-count" style="color:#ff6b6b">375</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">hisat2</span>
+                        <span class="tool-count" style="color:#ff6b6b">368</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">trimmomatic</span>
+                        <span class="tool-count" style="color:#ff6b6b">348</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">fastqc</span>
+                        <span class="tool-count" style="color:#ff6b6b">335</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">stringtie</span>
+                        <span class="tool-count" style="color:#ff6b6b">237</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">featurecounts</span>
+                        <span class="tool-count" style="color:#ff6b6b">222</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">spades</span>
+                        <span class="tool-count" style="color:#ff6b6b">197</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">busco</span>
+                        <span class="tool-count" style="color:#ff6b6b">177</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">freebayes</span>
+                        <span class="tool-count" style="color:#ff6b6b">165</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">diffbind</span>
+                        <span class="tool-count" style="color:#ff6b6b">162</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">unicycler</span>
+                        <span class="tool-count" style="color:#ff6b6b">160</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">cutadapt</span>
+                        <span class="tool-count" style="color:#ff6b6b">122</span>
+                    </div>
+                    <div class="tool-item">
+                        <span class="tool-name">multiqc</span>
+                        <span class="tool-count" style="color:#ff6b6b">116</span>
+                    </div>
+                </div>
+                <div class="recommendation">
+                    <strong>Recommendation:</strong> Add tool-specific FAQs for DESeq2, Trinity, Bowtie2, etc.
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">🎯 Recommended Actions</div>
+        
+        <div class="action-items">
+            <div class="action-card action-high">
+                <h3>File Format Documentation <span class="priority-badge priority-high">HIGH PRIORITY</span></h3>
+                <p>1,738 bug mentions vs 110 help resources. Users struggle with FASTQ, BAM, BED, VCF formats. Create comprehensive format guides with common error solutions.</p>
+            </div>
+            <div class="action-card action-high">
+                <h3>Storage & Quota FAQs <span class="priority-badge priority-high">HIGH PRIORITY</span></h3>
+                <p>617 bug mentions vs 16 help resources. Document how to check quota, delete data, request increases, and manage disk space efficiently.</p>
+            </div>
+            <div class="action-card action-high">
+                <h3>History Management Guide <span class="priority-badge priority-high">HIGH PRIORITY</span></h3>
+                <p>1,040 bug mentions vs 81 help resources. Create guides for finding, recovering, sharing, and organizing histories.</p>
+            </div>
+            <div class="action-card action-medium">
+                <h3>Tool-Specific Troubleshooting <span class="priority-badge priority-medium">MEDIUM</span></h3>
+                <p>Top tools like DESeq2, Trinity, Bowtie2, HISAT2 generate hundreds of issues. Create tool-specific FAQ pages with common errors and solutions.</p>
+            </div>
+            <div class="action-card action-medium">
+                <h3>Assembly Tools Documentation <span class="priority-badge priority-medium">MEDIUM</span></h3>
+                <p>SPAdes (197), Flye (108), Unicycler (160) have no help forum coverage. Create assembly workflow guides.</p>
+            </div>
+            <div class="action-card action-medium">
+                <h3>RNA-seq Pipeline FAQs <span class="priority-badge priority-medium">MEDIUM</span></h3>
+                <p>DESeq2 (489), StringTie (237), featureCounts (222) are heavily used. Document common RNA-seq workflow issues.</p>
+            </div>
+        </div>
+
+        <div class="section-title">🔧 Tool Comparison Across Sources</div>
+        
+        <div class="card full-width">
+            <h2><span class="icon">📊</span> Top 25 Tools - Cross-Source Analysis</h2>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-color" style="background:#ff6b6b"></div> Bug Reports</div>
+                <div class="legend-item"><div class="legend-color" style="background:#00d4ff"></div> Help Forum</div>
+                <div class="legend-item"><div class="legend-color" style="background:#ffd93d"></div> GTN FAQs</div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Tool</th>
+                        <th>Bug Reports</th>
+                        <th>Help Forum</th>
+                        <th>GTN FAQs</th>
+                        <th>Visual Comparison</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td><strong>deseq2</strong></td>
+                        <td>489</td>
+                        <td>9</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:200px" title="Bugs: 489"></div>
+                                <div class="bar-discourse" style="width:3px" title="Discourse: 9"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td><strong>trinity</strong></td>
+                        <td>451</td>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:184px" title="Bugs: 451"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 1"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td><strong>bowtie2</strong></td>
+                        <td>375</td>
+                        <td>6</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:153px" title="Bugs: 375"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 6"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td><strong>hisat2</strong></td>
+                        <td>368</td>
+                        <td>8</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:150px" title="Bugs: 368"></div>
+                                <div class="bar-discourse" style="width:3px" title="Discourse: 8"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td><strong>trimmomatic</strong></td>
+                        <td>348</td>
+                        <td>2</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:142px" title="Bugs: 348"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 2"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td><strong>fastqc</strong></td>
+                        <td>335</td>
+                        <td>5</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:137px" title="Bugs: 335"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 5"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td><strong>stringtie</strong></td>
+                        <td>237</td>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:96px" title="Bugs: 237"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 1"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td><strong>featurecounts</strong></td>
+                        <td>222</td>
+                        <td>8</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:90px" title="Bugs: 222"></div>
+                                <div class="bar-discourse" style="width:3px" title="Discourse: 8"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td><strong>spades</strong></td>
+                        <td>197</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:80px" title="Bugs: 197"></div>
+                                <div class="bar-discourse" style="width:0px" title="Discourse: 0"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td><strong>busco</strong></td>
+                        <td>177</td>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:72px" title="Bugs: 177"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 1"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>11</td>
+                        <td><strong>freebayes</strong></td>
+                        <td>165</td>
+                        <td>4</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:67px" title="Bugs: 165"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 4"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>12</td>
+                        <td><strong>diffbind</strong></td>
+                        <td>162</td>
+                        <td>3</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:66px" title="Bugs: 162"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 3"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>13</td>
+                        <td><strong>unicycler</strong></td>
+                        <td>160</td>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:65px" title="Bugs: 160"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 1"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>14</td>
+                        <td><strong>cutadapt</strong></td>
+                        <td>122</td>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:49px" title="Bugs: 122"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 1"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>15</td>
+                        <td><strong>multiqc</strong></td>
+                        <td>116</td>
+                        <td>3</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:47px" title="Bugs: 116"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 3"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>16</td>
+                        <td><strong>flye</strong></td>
+                        <td>108</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:44px" title="Bugs: 108"></div>
+                                <div class="bar-discourse" style="width:0px" title="Discourse: 0"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>17</td>
+                        <td><strong>kraken2</strong></td>
+                        <td>102</td>
+                        <td>7</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:41px" title="Bugs: 102"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 7"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>18</td>
+                        <td><strong>maker</strong></td>
+                        <td>87</td>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:35px" title="Bugs: 87"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 1"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>19</td>
+                        <td><strong>salmon</strong></td>
+                        <td>86</td>
+                        <td>3</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:35px" title="Bugs: 86"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 3"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>20</td>
+                        <td><strong>prokka</strong></td>
+                        <td>78</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:31px" title="Bugs: 78"></div>
+                                <div class="bar-discourse" style="width:0px" title="Discourse: 0"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>21</td>
+                        <td><strong>edger</strong></td>
+                        <td>65</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:26px" title="Bugs: 65"></div>
+                                <div class="bar-discourse" style="width:0px" title="Discourse: 0"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>22</td>
+                        <td><strong>minimap2</strong></td>
+                        <td>65</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:26px" title="Bugs: 65"></div>
+                                <div class="bar-discourse" style="width:0px" title="Discourse: 0"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>23</td>
+                        <td><strong>circos</strong></td>
+                        <td>63</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:25px" title="Bugs: 63"></div>
+                                <div class="bar-discourse" style="width:0px" title="Discourse: 0"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>24</td>
+                        <td><strong>roary</strong></td>
+                        <td>57</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:23px" title="Bugs: 57"></div>
+                                <div class="bar-discourse" style="width:0px" title="Discourse: 0"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>25</td>
+                        <td><strong>fastp</strong></td>
+                        <td>55</td>
+                        <td>3</td>
+                        <td>0</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar-bugs" style="width:22px" title="Bugs: 55"></div>
+                                <div class="bar-discourse" style="width:2px" title="Discourse: 3"></div>
+                                <div class="bar-gtn" style="width:0px" title="GTN: 0"></div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section-title">📁 Data Files</div>
+        
+        <div class="card full-width">
+            <h2><span class="icon">💾</span> Saved Analysis Files</h2>
+            <table>
+                <thead>
+                    <tr><th>File</th><th>Description</th><th>Location</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>bugs_analysis_20260113.json</strong></td>
+                        <td>Categorized bug emails with topic distribution</td>
+                        <td>~/bugs-mbox/20260113_download/</td>
+                    </tr>
+                    <tr>
+                        <td><strong>comparison_analysis_20260113.json</strong></td>
+                        <td>Cross-source comparison data</td>
+                        <td>~/bugs-mbox/20260113_download/</td>
+                    </tr>
+                    <tr>
+                        <td><strong>gtn_faqs_20260113.json</strong></td>
+                        <td>GTN FAQ content by category</td>
+                        <td>~/bugs-mbox/20260113_download/gtn-faqs/</td>
+                    </tr>
+                    <tr>
+                        <td><strong>discourse_topics_20260113.json</strong></td>
+                        <td>Help forum topic summaries</td>
+                        <td>~/bugs-mbox/20260113_download/discourse-help/</td>
+                    </tr>
+                    <tr>
+                        <td><strong>galaxy-bugs-{year}.mbox</strong></td>
+                        <td>Raw mbox files by year (2021-2025)</td>
+                        <td>~/bugs-mbox/20260113_download/</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        // Coverage chart
+        new Chart(document.getElementById('coverageChart'), {
+            type: 'bar',
+            data: {
+                labels: ['File Formats', 'Data Input/Output', 'Storage & Quota', 'History & Datasets', 'Reference Genomes', 'Collections', 'Job Execution', 'Workflows'],
+                datasets: [
+                    {
+                        label: 'Bug Reports',
+                        data: [1738, 385, 617, 1040, 219, 225, 46, 26],
+                        backgroundColor: 'rgba(255, 107, 107, 0.7)',
+                    },
+                    {
+                        label: 'Help Forum',
+                        data: [94, 60, 11, 60, 56, 39, 53, 18],
+                        backgroundColor: 'rgba(0, 212, 255, 0.7)',
+                    },
+                    {
+                        label: 'GTN FAQs',
+                        data: [16, 17, 5, 21, 12, 6, 7, 7],
+                        backgroundColor: 'rgba(255, 217, 61, 0.7)',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { position: 'top', labels: { color: '#888' } }
+                },
+                scales: {
+                    x: { 
+                        type: 'logarithmic',
+                        grid: { color: 'rgba(255,255,255,0.1)' }, 
+                        ticks: { color: '#888' } 
+                    },
+                    y: { grid: { display: false }, ticks: { color: '#888' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

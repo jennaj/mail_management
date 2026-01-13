@@ -6,172 +6,251 @@ AI-powered analysis of the galaxy-bugs mailing list to classify issues, identify
 
 - **Email Ingestion**: Fetch emails from HyperKitty (Mailman 3) archives or parse local mbox files
 - **Knowledge Base Integration**: Sync and search help.galaxyproject.org Discourse forum
+- **GTN FAQ Integration**: Compare with Galaxy Training Network FAQs
 - **AI Classification**: Use Claude to classify issues (bug, question, security, etc.)
 - **Topic Clustering**: Group similar emails using BERTopic
 - **Smart Routing**: Identify which emails can be auto-answered vs need human attention
+- **Coverage Analysis**: Identify documentation gaps between bugs and existing help resources
 - **Reporting**: Generate daily, weekly, monthly, and yearly summaries
+- **Interactive Dashboards**: HTML dashboards for visualizing trends and gaps
 
-## Installation
+## Quick Start
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/mail_management.git
+git clone https://github.com/jennaj/mail_management.git
 cd mail_management
 
 # Create virtual environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate
 
 # Install dependencies
 pip install -e .
 
-# For development
-pip install -e ".[dev]"
+# Copy and configure environment
+cp .env.example .env
+# Edit .env with your ANTHROPIC_API_KEY
 ```
 
-## Configuration
+## Data Storage
 
-1. Copy the example environment file:
-   ```bash
-   cp .env.example .env
-   ```
+### Local Data (Not in Git)
 
-2. Edit `.env` with your API keys:
-   ```bash
-   ANTHROPIC_API_KEY=sk-ant-...    # Required: Claude API key
-   VOYAGE_API_KEY=pa-...           # Required: Voyage AI key for embeddings
-   ```
+Data files are stored locally and excluded from version control:
+
+```
+~/bugs-mbox/YYYYMMDD_download/
+├── galaxy-bugs-2021.mbox      # Raw mbox by year
+├── galaxy-bugs-2022.mbox
+├── galaxy-bugs-2023.mbox
+├── galaxy-bugs-2024.mbox
+├── galaxy-bugs-2025.mbox
+├── bugs_analysis_YYYYMMDD.json        # Categorized bug topics
+├── comparison_analysis_YYYYMMDD.json  # Cross-source gap analysis
+├── gtn-faqs/
+│   └── gtn_faqs_YYYYMMDD.json         # GTN FAQ content
+└── discourse-help/
+    └── discourse_topics_YYYYMMDD.json # Help forum topics
+```
+
+### Reports (In Git)
+
+Generated HTML dashboards are tracked in version control:
+
+```
+reports/
+├── mbox-dashboard.html        # Tool analysis from bug emails
+├── coverage-comparison.html   # Gap analysis across sources
+├── dashboard.html             # System status
+└── insights.html              # Data insights
+```
+
+## Dashboards
+
+### Mbox Analysis Dashboard (`reports/mbox-dashboard.html`)
+
+Analyzes bug email content:
+- **24,351 emails** from 2021-2025
+- Top 25 tools generating issues
+- Tools grouped by category (RNA-seq, Assembly, QC, etc.)
+- Issue type distribution
+
+### Coverage Comparison Dashboard (`reports/coverage-comparison.html`)
+
+Compares three knowledge sources:
+- **Bug emails** (galaxy-bugs mailing list)
+- **Help forum** (help.galaxyproject.org Discourse)
+- **GTN FAQs** (training.galaxyproject.org)
+
+Identifies:
+- Documentation gaps (topics in bugs but not in help/FAQs)
+- Tools with no help coverage
+- Priority areas for new FAQ development
+
+## Key Findings
+
+### Documentation Gaps (from Coverage Analysis)
+
+| Category | Bug Reports | Help Resources | Gap |
+|----------|-------------|----------------|-----|
+| File Formats | 1,738 | 110 | 16x under-documented |
+| History & Datasets | 1,040 | 81 | 13x under-documented |
+| Storage & Quota | 617 | 16 | 39x under-documented |
+
+### Top Tools Needing FAQs
+
+1. **DESeq2** - 489 bug mentions, 0 FAQs
+2. **Trinity** - 451 bug mentions, 0 FAQs
+3. **Bowtie2** - 375 bug mentions, 0 FAQs
+4. **HISAT2** - 368 bug mentions, 0 FAQs
+5. **Trimmomatic** - 348 bug mentions, 0 FAQs
+
+### Tools with No Help Forum Coverage
+
+SPAdes (197), Flye (108), Prokka (78), edgeR (65), minimap2 (65), Circos (63), Roary (57)
 
 ## Usage
 
-### Sync Emails
+### Download Mbox Archives
 
-Download and import emails from the mailing list:
+The HyperKitty export requires authentication:
 
-```bash
-# Sync yesterday's emails
-galaxy-mail sync
-
-# Sync specific date range
-galaxy-mail sync --start 2025-01-01 --end 2025-01-10
-
-# Import from local mbox file
-galaxy-mail sync --mbox /path/to/archive.mbox
+```python
+# Downloads are saved to ~/bugs-mbox/YYYYMMDD_download/
+# Use date-range exports to avoid timeouts:
+# ?start=2025-01-01&end=2026-01-01
 ```
 
 ### Sync Knowledge Base
 
-Import articles from help.galaxyproject.org:
-
 ```bash
-# Sync all topics
-galaxy-mail kb-sync
+# Import from help.galaxyproject.org
+galaxy-mail kb-sync --max 200
 
-# Sync specific categories
-galaxy-mail kb-sync --categories "support,tutorials"
-
-# Limit number of topics
-galaxy-mail kb-sync --max 1000
-```
-
-### Analyze Emails
-
-Classify emails using AI:
-
-```bash
-# Analyze pending emails from today
-galaxy-mail analyze
-
-# Analyze specific date
-galaxy-mail analyze --date 2025-01-10
-
-# Analyze without knowledge base context
-galaxy-mail analyze --no-kb
-```
-
-### Generate Reports
-
-```bash
-# Daily report
-galaxy-mail report daily
-
-# Weekly report for specific week
-galaxy-mail report weekly --date 2025-01-10
-
-# Monthly report
-galaxy-mail report monthly
-
-# Yearly summary
-galaxy-mail report yearly
-```
-
-### Other Commands
-
-```bash
 # Search knowledge base
 galaxy-mail kb-search "tool installation error"
+```
 
-# Cluster emails by topic
-galaxy-mail cluster
+### Generate Analysis
 
+```bash
 # View statistics
 galaxy-mail stats
 
-# Import historical data
-galaxy-mail import-history --start 2024-01-01
+# Generate reports
+galaxy-mail report daily
 ```
+
+## CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `galaxy-mail sync` | Download and import emails |
+| `galaxy-mail kb-sync` | Sync Discourse help topics |
+| `galaxy-mail kb-search` | Search knowledge base |
+| `galaxy-mail analyze` | Classify emails with AI |
+| `galaxy-mail cluster` | Group emails by topic |
+| `galaxy-mail report` | Generate summaries |
+| `galaxy-mail stats` | View statistics |
 
 ## Project Structure
 
 ```
 mail_management/
-├── config/
-│   └── settings.py          # Configuration management
+├── pyproject.toml              # Dependencies and project config
+├── .env.example                # Environment template
+├── README.md                   # This file
+├── reports/                    # Generated HTML dashboards
+│   ├── mbox-dashboard.html
+│   ├── coverage-comparison.html
+│   ├── dashboard.html
+│   └── insights.html
 ├── src/galaxy_mail_analyzer/
-│   ├── cli.py               # Command-line interface
-│   ├── ingestion/           # Email fetching and parsing
-│   ├── knowledge_base/      # Discourse integration
-│   ├── analysis/            # AI classification and clustering
-│   ├── storage/             # Database and vector store
-│   └── reporting/           # Report generation
-├── data/                    # Local data (gitignored)
-│   ├── mbox/               # Downloaded mbox files
-│   ├── chroma/             # Vector database
-│   └── reports/            # Generated reports
-└── tests/                   # Test suite
+│   ├── cli.py                  # Typer CLI commands
+│   ├── config/
+│   │   └── settings.py         # Pydantic settings
+│   ├── ingestion/
+│   │   ├── hyperkitty.py       # HyperKitty mbox downloader
+│   │   └── mbox_parser.py      # Email parsing
+│   ├── knowledge_base/
+│   │   ├── discourse.py        # Discourse API client
+│   │   └── indexer.py          # Embedding indexer
+│   ├── analysis/
+│   │   ├── embeddings.py       # sentence-transformers embeddings
+│   │   ├── clustering.py       # BERTopic clustering
+│   │   └── claude.py           # Claude AI analysis
+│   ├── storage/
+│   │   ├── models.py           # SQLAlchemy models
+│   │   ├── database.py         # DB connection
+│   │   └── vector_store.py     # ChromaDB
+│   └── reporting/
+│       └── generators.py       # Report generation
+├── data/                       # Local data (gitignored)
+└── tests/                      # Test suite
 ```
 
-## Programmatic Email Access
+## Configuration
 
-### Method 1: HyperKitty Export (Recommended)
+### Environment Variables
 
-The tool automatically downloads mbox archives from HyperKitty:
-
-```
-https://lists.galaxyproject.org/archives/list/galaxy-bugs.lists.galaxyproject.org/export/galaxy-bugs.lists.galaxyproject.org.mbox.gz?start=2025-01-01&end=2025-01-10
-```
-
-### Method 2: Direct Mbox File
-
-Ask your sysadmin for mbox exports from:
-```
-/var/lib/mailman3/archives/
-```
-
-Then import:
 ```bash
-galaxy-mail sync --mbox /path/to/galaxy-bugs.mbox
+# Required
+ANTHROPIC_API_KEY=sk-ant-...    # Claude API key
+
+# Optional (defaults provided)
+DATABASE_URL=sqlite:///./data/galaxy_mail.db
+CHROMA_PERSIST_DIR=./data/chroma
+EMBEDDING_MODEL=all-MiniLM-L6-v2
 ```
+
+### Embedding Model
+
+Uses **sentence-transformers** with `all-MiniLM-L6-v2` for free, local embeddings (no API costs).
+
+## Incremental Updates
+
+Data files are date-stamped for incremental updates:
+
+```
+bugs_analysis_20260113.json
+comparison_analysis_20260113.json
+gtn_faqs_20260113.json
+discourse_topics_20260113.json
+```
+
+To update, run the analysis again - new files will be created with the current date, preserving history.
+
+## Use Cases
+
+### 1. Drafting Email Replies
+
+Use the coverage analysis to find relevant help resources:
+- Search Discourse topics for matching issues
+- Link to GTN FAQs for common questions
+- Identify when no help exists (flag for human attention)
+
+### 2. Building FAQs
+
+Priority areas identified from gap analysis:
+1. File format troubleshooting (FASTQ, BAM, BED, VCF)
+2. Storage/quota management
+3. Tool-specific guides (DESeq2, Trinity, assembly tools)
+4. Job queue explanations
+
+### 3. Trend Analysis
+
+Track issue patterns over time:
+- Which tools generate most support requests
+- Seasonal patterns in user questions
+- Emerging issues with new tools
 
 ## API Costs
 
-Estimated costs per 1000 emails:
-
-| Service | Cost |
-|---------|------|
-| Claude (claude-sonnet-4-5-20250929) | ~$1.50 |
-| Voyage AI (voyage-3.5) | ~$0.06 |
-| **Total** | ~$1.56 |
+| Service | Usage | Cost |
+|---------|-------|------|
+| Claude (analysis) | ~500K tokens/1000 emails | ~$1.50 |
+| Embeddings | Local (sentence-transformers) | Free |
 
 ## Development
 
@@ -192,3 +271,9 @@ ruff check src/
 ## License
 
 MIT
+
+## Links
+
+- [Galaxy Help Forum](https://help.galaxyproject.org)
+- [Galaxy Training Network](https://training.galaxyproject.org)
+- [Galaxy Project](https://galaxyproject.org)
